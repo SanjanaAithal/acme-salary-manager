@@ -2,6 +2,7 @@ package org.example.acmesalarymanager.common;
 
 import org.example.acmesalarymanager.employee.DuplicateEmailException;
 import org.example.acmesalarymanager.employee.EmployeeNotFoundException;
+import org.example.acmesalarymanager.employee.InvalidSortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -46,6 +47,11 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
         return problem(HttpStatus.BAD_REQUEST, "Malformed request",
                 "Request body is missing or not valid JSON, or contains an invalid value");
+    }
+
+    @ExceptionHandler(InvalidSortException.class)
+    public ProblemDetail handleInvalidSort(InvalidSortException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Invalid sort", ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
