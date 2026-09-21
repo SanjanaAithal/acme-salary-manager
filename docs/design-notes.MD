@@ -1,85 +1,54 @@
 # ACME Salary Manager: Design Notes
 
-Written before the code, so I can build against a plan and update it as I learn.
-
 ## Approach
 
-Build the backend first, test-first, because it defines the API the UI depends on. Then build the Angular UI against the finished API. Each step is a small commit.
+Backend first and test-first, since it defines the API. Then the Angular UI on top. Small, incremental commits.
 
 ## Architecture
 
-A single Spring Boot application with a layered structure, packaged by feature:
+One Spring Boot app, layered and grouped by feature:
 
 ```
-com.acme.salary
-├── employee     controller, service, repository, entity, dto
-├── analytics    controller, service, response models
-├── common       error handling, config
-└── seed         data seeder
+org.example.acmesalarymanager
+├── employee    controller, service, repository, entity, dto
+├── analytics   controller, service, response models
+├── currency    country-to-currency table, static rates, converter
+├── common      error handling, config
+└── seed        data seeder
 ```
 
-- **Controller:** HTTP only. Reads input, calls a service, returns a response. No business logic.
-- **Service:** business rules and transactions. This is where most unit tests live.
-- **Repository:** Spring Data JPA, plus a few custom queries for analytics.
-- **DTOs:** the API never exposes entities directly, so the database can change without breaking the API.
-- **Errors:** one `@RestControllerAdvice` returns a consistent error body for validation failures, not found, and duplicate emails.
+Controllers handle HTTP only. Services hold the rules. DTOs keep entities out of the API. One `@RestControllerAdvice` returns consistent errors.
 
 ## Data model
 
-One main table, `employees`:
+Table `employees`: id, full_name, email (unique), job_title, department, country, salary (local), currency, salary_usd, hire_date, status, created_at, updated_at.
 
-| Column | Type | Notes |
-|---|---|---|
-| id | bigint | generated |
-| full_name | varchar | required |
-| email | varchar | required, unique |
-| job_title | varchar | required, indexed |
-| department | varchar | required, indexed |
-| country | varchar | required, indexed |
-| salary | decimal(15,2) | required, > 0, `BigDecimal` in Java |
-| hire_date | date | required, not in the future |
-| status | varchar | ACTIVE, ON_LEAVE, TERMINATED |
-| created_at, updated_at | timestamp | set by the app |
-
-Schema is managed with Flyway migrations, and Hibernate only validates it (`ddl-auto: validate`), so the schema is explicit and reviewable.
+Flyway manages the schema, and Hibernate only validates it.
 
 ## API (draft)
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/employees` | list with `search`, `country`, `department`, `jobTitle`, `status`, `page`, `size`, `sort` |
-| GET | `/api/employees/{id}` | one employee |
-| POST | `/api/employees` | create |
-| PUT | `/api/employees/{id}` | update |
-| DELETE | `/api/employees/{id}` | delete |
-| GET | `/api/employees/filter-options` | distinct countries, departments, job titles for the filter dropdowns |
-| GET | `/api/analytics/summary` | headcount, total payroll, average salary |
-| GET | `/api/analytics/salary-stats?groupBy=` | count, min, max, average, median by country, department or job title |
-| GET | `/api/analytics/salary-distribution` | salary bands with counts |
+| GET | `/api/employees` | list with search, filters, paging, sorting |
+| GET, POST, PUT, DELETE | `/api/employees/{id}` | single employee (POST on the collection) |
+| GET | `/api/employees/filter-options` | dropdown values |
+| GET | `/api/analytics/summary` | headcount, total payroll, average |
+| GET | `/api/analytics/salary-stats?groupBy=` | count, min, max, average, median in USD |
+| GET | `/api/analytics/salary-distribution` | salary bands |
 
-## Key decisions and trade-offs
+## Key decisions
 
-- **`BigDecimal` for salary.** Floating point can't represent money exactly.
-- **Aggregation in SQL.** Analytics use `GROUP BY` in the database instead of loading 10,000 rows into memory. It's faster, and it scales better.
-- **Indexes on filter columns.** Country, department, job title and status are what HR filters by.
-- **Server-side paging.** The UI only ever receives one page.
-- **Median.** Not every SQL database has a portable median function. H2 has one, and I'll note that it's tied to the database if I keep it in a native query.
-- **H2 in file mode.** Zero setup, and it works smoothly with Hibernate. The code uses standard JPA, so moving to Postgres later is a small change.
-- **Deterministic seed.** A fixed random seed and JDBC batch inserts, so 10,000 rows load in about a second and are identical on every run.
+- **`BigDecimal` for money.** No floating point.
+- **Local salary plus stored USD.** Rates are static and dated, and conversion rounds half-up to two decimals. Analytics stay plain SQL.
+- **Aggregation in SQL** with `GROUP BY`, plus indexes on the filter columns, added after measuring.
+- **Server-side paging** with `id` as a sort tie-breaker, and whitelisted sort fields.
+- **H2 in file mode.** Standard JPA, so moving to Postgres later is small.
+- **Deterministic seed** with a fixed random seed and batch inserts.
 
-## Open questions (sent to the hiring team)
+## Testing
 
-- **Currency:** employees are in several countries. Grouping salaries by department or job title across countries only makes sense if they're in a comparable currency. I have deliberately not added a currency column yet. Once I know the expected handling, I'll add it in a new migration.
-
-## Testing approach
-
-- **Service unit tests:** JUnit 5, Mockito and AssertJ. No Spring context, so they run in milliseconds.
-- **Repository tests:** `@DataJpaTest` on embedded H2, mainly for filters and analytics queries.
-- **API tests:** `@WebMvcTest` with MockMvc for status codes, validation errors and JSON shape.
-- **Determinism:** no random data in tests, and a fixed clock where dates matter.
+Service tests use Mockito with no Spring context. Repository tests use `@DataJpaTest`. API tests use `@WebMvcTest`. A fixed clock keeps tests deterministic.
 
 ## Performance targets
 
-- Employee list under 300 ms with filters on 10,000 rows.
-- Analytics endpoints under 500 ms.
-- I'll check both with the seeded data before calling it done.
+List under 300 ms and analytics under 500 ms on 10,000 rows, checked with the seeded data.
