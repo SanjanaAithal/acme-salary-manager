@@ -1,5 +1,8 @@
 package org.example.acmesalarymanager.employee;
 
+import org.example.acmesalarymanager.currency.CountryCatalog;
+import org.example.acmesalarymanager.currency.CurrencyConverter;
+import org.example.acmesalarymanager.currency.UnsupportedCountryException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +38,7 @@ class EmployeeServiceTest {
     @BeforeEach
     void setUp() {
         Clock fixedClock = Clock.fixed(Instant.parse("2025-03-10T09:30:00Z"), ZoneOffset.UTC);
-        service = new EmployeeService(repository, fixedClock);
+        service = new EmployeeService(repository, fixedClock, new CountryCatalog(), new CurrencyConverter());
     }
 
     @Test
@@ -136,6 +139,72 @@ class EmployeeServiceTest {
                 .isInstanceOf(EmployeeNotFoundException.class);
 
         verify(repository, never()).deleteById(any());
+    }
+
+    @Test
+    void create_setsCurrencyFromCountryAndConvertsSalaryToUsd() {
+        when(repository.existsByEmail("asha@acme.com")).thenReturn(false);
+        when(repository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EmployeeResponse response = service.create(request("asha@acme.com"));
+
+        assertThat(response.currency()).isEqualTo("INR");
+        assertThat(response.salary()).isEqualByComparingTo("85000.00");
+        assertThat(response.salaryUsd()).isEqualByComparingTo("994.50");
+    }
+
+    @Test
+    void create_storesTheCanonicalCountryName() {
+        when(repository.existsByEmail("asha@acme.com")).thenReturn(false);
+        when(repository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EmployeeResponse response = service.create(requestIn("  india "));
+
+        assertThat(response.country()).isEqualTo("India");
+    }
+
+    @Test
+    void create_rejectsUnsupportedCountry() {
+        assertThatThrownBy(() -> service.create(requestIn("Atlantis")))
+                .isInstanceOf(UnsupportedCountryException.class);
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void update_recomputesCurrencyAndUsdFromNewCountryAndSalary() {
+        Employee existing = existing(5L);
+        when(repository.findById(5L)).thenReturn(Optional.of(existing));
+        when(repository.existsByEmailAndIdNot("asha@acme.com", 5L)).thenReturn(false);
+        when(repository.save(existing)).thenReturn(existing);
+
+        EmployeeResponse response = service.update(5L, request("asha@acme.com"));
+
+        assertThat(response.country()).isEqualTo("India");
+        assertThat(response.currency()).isEqualTo("INR");
+        assertThat(response.salaryUsd()).isEqualByComparingTo("994.50");
+    }
+
+    @Test
+    void update_rejectsUnsupportedCountry() {
+        when(repository.findById(5L)).thenReturn(Optional.of(existing(5L)));
+
+        assertThatThrownBy(() -> service.update(5L, requestIn("Atlantis")))
+                .isInstanceOf(UnsupportedCountryException.class);
+
+        verify(repository, never()).save(any());
+    }
+
+    private static EmployeeRequest requestIn(String country) {
+        return new EmployeeRequest(
+                "Asha Rao",
+                "asha@acme.com",
+                "Software Engineer",
+                "Engineering",
+                country,
+                new BigDecimal("85000.00"),
+                LocalDate.of(2022, 6, 1),
+                EmploymentStatus.ACTIVE);
     }
 
     private static EmployeeRequest request(String email) {

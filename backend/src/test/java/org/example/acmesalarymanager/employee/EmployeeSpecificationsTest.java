@@ -129,6 +129,8 @@ class EmployeeSpecificationsTest {
         employee.setDepartment(department);
         employee.setJobTitle(jobTitle);
         employee.setSalary(new BigDecimal(salary));
+        employee.setCurrency("USD");
+        employee.setSalaryUsd(new BigDecimal(salary));
         employee.setHireDate(LocalDate.of(2022, 6, 1));
         employee.setStatus(status);
         employee.setCreatedAt(now);

@@ -1,6 +1,8 @@
 package org.example.acmesalarymanager.employee;
 
 import org.example.acmesalarymanager.common.PageResponse;
+import org.example.acmesalarymanager.currency.CountryCatalog;
+import org.example.acmesalarymanager.currency.CurrencyConverter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +44,7 @@ class EmployeeServiceSearchTest {
     @BeforeEach
     void setUp() {
         Clock fixedClock = Clock.fixed(Instant.parse("2025-03-10T09:30:00Z"), ZoneOffset.UTC);
-        service = new EmployeeService(repository, fixedClock);
+        service = new EmployeeService(repository, fixedClock, new CountryCatalog(), new CurrencyConverter());
     }
 
     @Test

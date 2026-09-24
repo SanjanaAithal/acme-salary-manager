@@ -115,7 +115,9 @@ class EmployeeControllerTest {
         mockMvc.perform(get("/api/employees/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fullName").value("Asha Rao"))
-                .andExpect(jsonPath("$.salary").value(85000.00));
+                .andExpect(jsonPath("$.salary").value(85000.00))
+                .andExpect(jsonPath("$.currency").value("INR"))
+                .andExpect(jsonPath("$.salaryUsd").value(994.50));
     }
 
     @Test
@@ -165,6 +167,6 @@ class EmployeeControllerTest {
         LocalDateTime now = LocalDateTime.of(2025, 3, 10, 9, 30);
         return new EmployeeResponse(id, "Asha Rao", "asha@acme.com", "Software Engineer",
                 "Engineering", "India", new BigDecimal("85000.00"),
-                LocalDate.of(2022, 6, 1), EmploymentStatus.ACTIVE, now, now);
+                "INR", new BigDecimal("994.50"), LocalDate.of(2022, 6, 1), EmploymentStatus.ACTIVE, now, now);
     }
 }

@@ -65,6 +65,8 @@ class EmployeeRepositoryTest {
         employee.setDepartment("Engineering");
         employee.setCountry("India");
         employee.setSalary(new BigDecimal("85000.00"));
+        employee.setCurrency("INR");
+        employee.setSalaryUsd(new BigDecimal("994.50"));
         employee.setHireDate(LocalDate.of(2022, 6, 1));
         employee.setStatus(EmploymentStatus.ACTIVE);
         employee.setCreatedAt(now);

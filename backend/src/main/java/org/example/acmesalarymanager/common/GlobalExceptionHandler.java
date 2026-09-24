@@ -1,5 +1,6 @@
 package org.example.acmesalarymanager.common;
 
+import org.example.acmesalarymanager.currency.UnsupportedCountryException;
 import org.example.acmesalarymanager.employee.DuplicateEmailException;
 import org.example.acmesalarymanager.employee.EmployeeNotFoundException;
 import org.example.acmesalarymanager.employee.InvalidSortException;
@@ -47,6 +48,11 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
         return problem(HttpStatus.BAD_REQUEST, "Malformed request",
                 "Request body is missing or not valid JSON, or contains an invalid value");
+    }
+
+    @ExceptionHandler(UnsupportedCountryException.class)
+    public ProblemDetail handleUnsupportedCountry(UnsupportedCountryException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Unsupported country", ex.getMessage());
     }
 
     @ExceptionHandler(InvalidSortException.class)

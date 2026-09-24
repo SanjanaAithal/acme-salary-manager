@@ -1,6 +1,9 @@
 package org.example.acmesalarymanager.employee;
 
 import org.example.acmesalarymanager.common.PageResponse;
+import org.example.acmesalarymanager.currency.CountryCatalog;
+import org.example.acmesalarymanager.currency.CountryCurrency;
+import org.example.acmesalarymanager.currency.CurrencyConverter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,14 +26,20 @@ public class EmployeeService {
 
     private final EmployeeRepository repository;
     private final Clock clock;
+    private final CountryCatalog countryCatalog;
+    private final CurrencyConverter currencyConverter;
 
-    public EmployeeService(EmployeeRepository repository, Clock clock) {
+    public EmployeeService(EmployeeRepository repository, Clock clock,
+                           CountryCatalog countryCatalog, CurrencyConverter currencyConverter) {
         this.repository = repository;
         this.clock = clock;
+        this.countryCatalog = countryCatalog;
+        this.currencyConverter = currencyConverter;
     }
 
     @Transactional
     public EmployeeResponse create(EmployeeRequest request) {
+        CountryCurrency country = countryCatalog.require(request.country());
         String email = normalizeEmail(request.email());
         if (repository.existsByEmail(email)) {
             throw new DuplicateEmailException(email);
@@ -38,7 +47,7 @@ public class EmployeeService {
 
         LocalDateTime now = LocalDateTime.now(clock);
         Employee employee = new Employee();
-        apply(employee, request, email);
+        apply(employee, request, email, country);
         employee.setCreatedAt(now);
         employee.setUpdatedAt(now);
 
@@ -70,12 +79,13 @@ public class EmployeeService {
     @Transactional
     public EmployeeResponse update(Long id, EmployeeRequest request) {
         Employee employee = findOrThrow(id);
+        CountryCurrency country = countryCatalog.require(request.country());
         String email = normalizeEmail(request.email());
         if (repository.existsByEmailAndIdNot(email, id)) {
             throw new DuplicateEmailException(email);
         }
 
-        apply(employee, request, email);
+        apply(employee, request, email, country);
         employee.setUpdatedAt(LocalDateTime.now(clock));
 
         return EmployeeResponse.from(repository.save(employee));
@@ -114,13 +124,15 @@ public class EmployeeService {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
-    private static void apply(Employee employee, EmployeeRequest request, String email) {
+    private void apply(Employee employee, EmployeeRequest request, String email, CountryCurrency country) {
         employee.setFullName(request.fullName().trim());
         employee.setEmail(email);
         employee.setJobTitle(request.jobTitle().trim());
         employee.setDepartment(request.department().trim());
-        employee.setCountry(request.country().trim());
+        employee.setCountry(country.country());
+        employee.setCurrency(country.currency());
         employee.setSalary(request.salary());
+        employee.setSalaryUsd(currencyConverter.toUsd(request.salary(), country.currency()));
         employee.setHireDate(request.hireDate());
         employee.setStatus(request.status());
     }

@@ -8,21 +8,25 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "employees")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Employee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @Column(nullable = false)
@@ -42,6 +46,12 @@ public class Employee {
 
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal salary;
+
+    @Column(nullable = false, length = 3)
+    private String currency;
+
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal salaryUsd;
 
     @Column(nullable = false)
     private LocalDate hireDate;

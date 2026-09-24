@@ -77,7 +77,7 @@ class EmployeeListControllerTest {
         LocalDateTime now = LocalDateTime.of(2025, 3, 10, 9, 30);
         EmployeeResponse asha = new EmployeeResponse(1L, "Asha Rao", "asha@acme.com",
                 "Software Engineer", "Engineering", "India", new BigDecimal("85000.00"),
-                LocalDate.of(2022, 6, 1), EmploymentStatus.ACTIVE, now, now);
+                "INR", new BigDecimal("994.50"), LocalDate.of(2022, 6, 1), EmploymentStatus.ACTIVE, now, now);
         when(service.search(any(EmployeeFilter.class), any(Pageable.class)))
                 .thenReturn(new PageResponse<>(List.of(asha), 0, 20, 41, 3));
 
