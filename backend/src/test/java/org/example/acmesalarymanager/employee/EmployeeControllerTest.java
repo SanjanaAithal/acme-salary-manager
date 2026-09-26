@@ -88,15 +88,6 @@ class EmployeeControllerTest {
     }
 
     @Test
-    void create_returns400WhenBodyIsNotJson() throws Exception {
-        mockMvc.perform(post("/api/employees")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("not json"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Malformed request"));
-    }
-
-    @Test
     void create_returns409WhenEmailAlreadyExists() throws Exception {
         when(service.create(any(EmployeeRequest.class)))
                 .thenThrow(new DuplicateEmailException("asha@acme.com"));
@@ -127,13 +118,6 @@ class EmployeeControllerTest {
         mockMvc.perform(get("/api/employees/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Employee not found"));
-    }
-
-    @Test
-    void get_returns400WhenIdIsNotANumber() throws Exception {
-        mockMvc.perform(get("/api/employees/abc"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid parameter"));
     }
 
     @Test

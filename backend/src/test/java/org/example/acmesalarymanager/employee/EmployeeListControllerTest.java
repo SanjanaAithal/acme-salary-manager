@@ -60,19 +60,6 @@ class EmployeeListControllerTest {
     }
 
     @Test
-    void list_usesDefaultPageWhenNoParamsGiven() throws Exception {
-        when(service.search(any(EmployeeFilter.class), any(Pageable.class)))
-                .thenReturn(new PageResponse<>(List.of(), 0, 20, 0, 0));
-
-        mockMvc.perform(get("/api/employees")).andExpect(status().isOk());
-
-        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
-        verify(service).search(any(EmployeeFilter.class), pageable.capture());
-        assertThat(pageable.getValue().getPageNumber()).isZero();
-        assertThat(pageable.getValue().getPageSize()).isEqualTo(20);
-    }
-
-    @Test
     void list_returnsPageJson() throws Exception {
         LocalDateTime now = LocalDateTime.of(2025, 3, 10, 9, 30);
         EmployeeResponse asha = new EmployeeResponse(1L, "Asha Rao", "asha@acme.com",

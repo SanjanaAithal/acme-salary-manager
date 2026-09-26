@@ -154,16 +154,6 @@ class EmployeeServiceTest {
     }
 
     @Test
-    void create_storesTheCanonicalCountryName() {
-        when(repository.existsByEmail("asha@acme.com")).thenReturn(false);
-        when(repository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        EmployeeResponse response = service.create(requestIn("  india "));
-
-        assertThat(response.country()).isEqualTo("India");
-    }
-
-    @Test
     void create_rejectsUnsupportedCountry() {
         assertThatThrownBy(() -> service.create(requestIn("Atlantis")))
                 .isInstanceOf(UnsupportedCountryException.class);

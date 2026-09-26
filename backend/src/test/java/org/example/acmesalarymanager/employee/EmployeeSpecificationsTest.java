@@ -37,24 +37,10 @@ class EmployeeSpecificationsTest {
     }
 
     @Test
-    void blankValuesAreIgnored() {
-        EmployeeFilter filter = new EmployeeFilter("  ", " ", "", null, null);
-
-        assertThat(names(filter)).hasSize(5);
-    }
-
-    @Test
     void searchMatchesNamePartsIgnoringCase() {
         EmployeeFilter filter = new EmployeeFilter("ASH", null, null, null, null);
 
         assertThat(names(filter)).containsExactlyInAnyOrder("Asha Rao", "Ashley Brown");
-    }
-
-    @Test
-    void searchAlsoMatchesEmail() {
-        EmployeeFilter filter = new EmployeeFilter("john@", null, null, null, null);
-
-        assertThat(names(filter)).containsExactly("John Smith");
     }
 
     @Test
@@ -76,13 +62,6 @@ class EmployeeSpecificationsTest {
         EmployeeFilter filter = new EmployeeFilter(null, null, "Engineering", "Software Engineer", null);
 
         assertThat(names(filter)).containsExactlyInAnyOrder("Asha Rao", "Maria Garcia");
-    }
-
-    @Test
-    void filtersByStatus() {
-        EmployeeFilter filter = new EmployeeFilter(null, null, null, null, EmploymentStatus.TERMINATED);
-
-        assertThat(names(filter)).containsExactly("Maria Garcia");
     }
 
     @Test

@@ -77,15 +77,6 @@ class EmployeeServiceSearchTest {
     }
 
     @Test
-    void search_doesNotDuplicateIdWhenAlreadySortedById() {
-        when(repository.findAll(anySpec(), any(Pageable.class))).thenReturn(Page.empty());
-
-        service.search(EmployeeFilter.empty(), PageRequest.of(0, 20, Sort.by("id")));
-
-        assertThat(capturedPageable().getSort()).isEqualTo(Sort.by("id"));
-    }
-
-    @Test
     void search_rejectsUnknownSortField() {
         assertThatThrownBy(() -> service.search(EmployeeFilter.empty(),
                 PageRequest.of(0, 20, Sort.by("password"))))

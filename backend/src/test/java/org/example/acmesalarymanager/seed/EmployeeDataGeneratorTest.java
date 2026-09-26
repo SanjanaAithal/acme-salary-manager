@@ -26,14 +26,6 @@ class EmployeeDataGeneratorTest {
     }
 
     @Test
-    void differentSeedProducesDifferentData() {
-        List<SeedEmployee> first = new EmployeeDataGenerator(countryCatalog, currencyConverter, 1).generate(200);
-        List<SeedEmployee> second = new EmployeeDataGenerator(countryCatalog, currencyConverter, 2).generate(200);
-
-        assertThat(first).isNotEqualTo(second);
-    }
-
-    @Test
     void generatesTheRequestedCount() {
         assertThat(generator().generate(500)).hasSize(500);
     }

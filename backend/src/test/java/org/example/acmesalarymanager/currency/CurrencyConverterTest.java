@@ -49,4 +49,16 @@ class CurrencyConverterTest {
                     .doesNotThrowAnyException();
         }
     }
+
+    @Test
+    void fromUsdIsTheInverseOfToUsd() {
+        BigDecimal usdTarget = new BigDecimal("100000");
+
+        for (CountryCurrency entry : new CountryCatalog().all()) {
+            BigDecimal local = converter.fromUsd(usdTarget, entry.currency());
+            BigDecimal backToUsd = converter.toUsd(local, entry.currency());
+
+            assertThat(backToUsd).isCloseTo(usdTarget, org.assertj.core.data.Offset.offset(new BigDecimal("1")));
+        }
+    }
 }
