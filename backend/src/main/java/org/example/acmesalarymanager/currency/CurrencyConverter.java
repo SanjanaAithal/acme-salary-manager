@@ -23,10 +23,18 @@ public class CurrencyConverter {
             "JPY", new BigDecimal("0.0064"));
 
     public BigDecimal toUsd(BigDecimal amount, String currency) {
+        return amount.multiply(rateFor(currency)).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal fromUsd(BigDecimal usdAmount, String currency) {
+        return usdAmount.divide(rateFor(currency), 2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal rateFor(String currency) {
         BigDecimal rate = USD_PER_UNIT.get(currency);
         if (rate == null) {
             throw new IllegalArgumentException("No exchange rate for currency " + currency);
         }
-        return amount.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+        return rate;
     }
 }
